@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {encrypt,decrypt,egcdInverse} from '../src/algorithms/cart256.js';
+test('round trips representative utf8 messages',()=>{for(const p of ['A','ASCII text','spaces & punctuation!','Demo@1234!','नमस्ते 🌍','', 'x'.repeat(64)])if(p){const e=encrypt(p,'teaching-key');const d=decrypt(e.ciphertextBase64,'teaching-key',e.nonce,e.originalByteLength);assert.deepEqual(d.recoveredBytes,[...Buffer.from(p)]);assert.equal(d.recoveredText,p)}});
+test('all odd multipliers have correct inverses modulo 256',()=>{for(let a=1;a<256;a+=2){const {inverse}=egcdInverse(a);assert.equal((a*inverse)%256,1)}});
+test('rejects empty inputs, invalid nonce and malformed ciphertext',()=>{assert.throws(()=>encrypt('','k'));assert.throws(()=>encrypt('p',''));assert.throws(()=>decrypt('YQ==','k','bad',1));assert.throws(()=>decrypt('@@','k','00'.repeat(16),1))});
