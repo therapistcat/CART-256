@@ -1,4 +1,36 @@
-# CipherAuth Lab
+# VanaProof — Ayurvedic Plant Verification & Cryptographic Forensics
+
+VanaProof turns an authenticated plant observation into an immutable, per-account integrity chain. It retains CipherAuth Lab's Argon2id session authentication and CART-256 teaching implementation, but uses **SHA-256 and HMAC-SHA256**—not CART-256—for record integrity.
+
+## Integrity model
+
+The server hashes uploaded image bytes before storage, canonicalizes immutable record fields with deterministic sorted-key JSON and NFC strings, and stores a SHA-256 payload digest. Each ledger entry binds record ID, owner ID, sequence, timestamp, payload digest, and previous entry hash. It is signed as `HMAC-SHA256(INTEGRITY_SECRET, canonical manifest)` and then hashed to produce the entry hash. Verification recalculates every value, uses constant-time comparison for digests/signatures, and reports payload, image, signature, sequence, entry-hash, and predecessor-link failures.
+
+The first record uses 64 zeroes as its genesis hash. This protects against database-only edits while the secret and an external copy of the expected chain head remain trusted. It cannot protect against an attacker who compromises the application server, HMAC secret, database, and every anchor copy.
+
+Set `INTEGRITY_SECRET` in `.env`; it is never sent to the client or API response. Records have no update/delete route: corrections require a new record. The database has unique `(owner, sequence)` and unique record-entry constraints; a failed entry insert removes the newly-created record.
+
+## Routes
+
+- `GET /api/plants` — searchable plant catalogue.
+- `POST /api/plant-records` — authenticated multipart proof creation (`photo`, `plantId`, `observation`, `location`); JPEG/PNG/WebP, max 4 MB.
+- `GET /api/plant-records`, `GET /api/plant-records/:id/image` — private journal and image.
+- `GET /api/proofs/:id`, `POST /api/integrity/verify` — private proof/chain verification.
+- `POST /api/cipher/encrypt`, `/decrypt` — original CART-256 teaching trace.
+
+The interface includes Scanner, Proof Explorer, Verify Engine, an explicitly isolated Attack Lab entry point, and CART-256 Workbench. CART-256 remains experimental reversible classroom material and must never be used for plant proof, passwords, or sensitive images.
+
+## Setup
+
+Copy `.env.example` to `.env`, configure MongoDB, `SESSION_SECRET`, and a separate random `INTEGRITY_SECRET`, then run `npm install` and `npm run dev`. Use `npm.cmd` on Windows machines where PowerShell blocks `npm.ps1`.
+
+Run `npm test` and `npm run build` before deployment. MongoDB-dependent proof tests should be run against an isolated test database.
+
+Plant catalogue content and traditional-use notes are educational only. A proof establishes record integrity, not botanical identity, medicinal efficacy, or safe use.
+
+---
+
+# CipherAuth Lab (original notes)
 
 An executable educational application demonstrating reversible byte transformations and a separate Argon2id based authentication flow. CART-256 is experimental classroom material, not a secure cipher. Never use it for real data or passwords.
 
